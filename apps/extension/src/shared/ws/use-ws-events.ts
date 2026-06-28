@@ -13,19 +13,22 @@ export function useWsEvents() {
 
     unsubs.push(
       wsClient.on('joined', ({ room, userId, sessionToken }) => {
-        store.setRoom(room);
-        store.setUserId(userId);
-        store.setView('room');
+        // Read existing session FIRST to preserve adminToken before any mutations
+        const existingSession = sessionStore.getSession(room.code);
+        const adminToken = existingSession?.adminToken;
 
-        const session = sessionStore.getSession(room.code);
         sessionStore.saveSession({
-          ...(session ?? {}),
           sessionToken,
           userId,
           roomCode: room.code,
           roomName: room.name,
+          ...(adminToken ? { adminToken } : {}),
         });
         sessionStore.setCurrentRoom(room.code);
+
+        store.setRoom(room);
+        store.setUserId(userId);
+        store.setView('room');
       })
     );
 

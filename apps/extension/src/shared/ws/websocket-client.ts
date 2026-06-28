@@ -32,6 +32,8 @@ class WebSocketClient {
   private options: WsClientOptions = {};
   private serverUrl = DEFAULT_WS_URL;
   private intentionalClose = false;
+  private openResolvers: Array<() => void> = [];
+  private openRejecters: Array<(e: Error) => void> = [];
 
   async connect(serverUrl?: string): Promise<void> {
     if (serverUrl) this.serverUrl = serverUrl;
@@ -45,8 +47,15 @@ class WebSocketClient {
       this.serverUrl = stored;
     }
 
+    // Already open — resolve immediately
+    if (this.ws?.readyState === WebSocket.OPEN) return;
+
     this.intentionalClose = false;
-    this.doConnect();
+    return new Promise<void>((resolve, reject) => {
+      this.openResolvers.push(resolve);
+      this.openRejecters.push(reject);
+      if (this.status !== 'connecting') this.doConnect();
+    });
   }
 
   private doConnect() {
@@ -55,6 +64,10 @@ class WebSocketClient {
     try {
       this.ws = new WebSocket(this.serverUrl);
     } catch {
+      const err = new Error('WebSocket creation failed');
+      this.openRejecters.forEach((r) => r(err));
+      this.openResolvers = [];
+      this.openRejecters = [];
       this.scheduleReconnect();
       return;
     }
@@ -63,6 +76,9 @@ class WebSocketClient {
       this.reconnectAttempts = 0;
       this.reconnectDelay = INITIAL_RECONNECT_DELAY;
       this.setStatus('connected');
+      this.openResolvers.forEach((r) => r());
+      this.openResolvers = [];
+      this.openRejecters = [];
     };
 
     this.ws.onmessage = (event) => {
@@ -76,6 +92,12 @@ class WebSocketClient {
 
     this.ws.onclose = () => {
       this.ws = null;
+      if (this.openRejecters.length) {
+        const err = new Error('WebSocket closed before connecting');
+        this.openRejecters.forEach((r) => r(err));
+        this.openResolvers = [];
+        this.openRejecters = [];
+      }
       if (!this.intentionalClose) {
         this.scheduleReconnect();
       } else {

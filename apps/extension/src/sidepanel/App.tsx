@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRoomStore } from '@/shared/store/room.store';
 import { useSessionStore } from '@/shared/store/session.store';
 import { useWsEvents } from '@/shared/ws/use-ws-events';
@@ -14,23 +14,34 @@ import { Button } from '@/shared/ui';
 export function App() {
   const { view, room, wsStatus, error, setView, leaveRoom } = useRoomStore();
   const { currentRoomCode, getSession } = useSessionStore();
+  const [pendingCode, setPendingCode] = useState<string | undefined>();
 
   useWsEvents();
 
-  // Attempt to rejoin on mount if we have a stored session
   useEffect(() => {
-    if (currentRoomCode) {
-      const session = getSession(currentRoomCode);
-      if (session) {
-        wsClient.connect().then(() => {
-          wsClient.send('join_room', {
-            roomCode: session.roomCode,
-            userName: 'Me', // Will be overridden by stored session name
-            sessionToken: session.sessionToken,
+    // Read intent set by popup before navigating
+    chrome.storage.session.get(['openView', 'pendingRoomCode'], (result) => {
+      if (result.openView === 'create-room') {
+        chrome.storage.session.remove('openView');
+        setView('create-room');
+      } else if (result.pendingRoomCode) {
+        chrome.storage.session.remove('pendingRoomCode');
+        setPendingCode(result.pendingRoomCode as string);
+        setView('join-room');
+      } else if (currentRoomCode) {
+        // Attempt to rejoin existing session
+        const session = getSession(currentRoomCode);
+        if (session) {
+          wsClient.connect().then(() => {
+            wsClient.send('join_room', {
+              roomCode: session.roomCode,
+              userName: 'Me',
+              sessionToken: session.sessionToken,
+            });
           });
-        });
+        }
       }
-    }
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleLeave() {
@@ -57,7 +68,7 @@ export function App() {
   }
 
   if (view === 'create-room') return <CreateRoom />;
-  if (view === 'join-room') return <JoinRoom />;
+  if (view === 'join-room') return <JoinRoom prefillCode={pendingCode} />;
 
   if (view === 'room' && room) {
     return (
@@ -104,14 +115,14 @@ export function App() {
               </div>
             )}
 
+            {/* Admin controls — shown first so they're always visible */}
+            <AdminControls />
+
             {/* Card voting area */}
             <CardGrid />
 
             {/* Participants */}
             <ParticipantList />
-
-            {/* Admin controls */}
-            <AdminControls />
           </div>
         </div>
       </div>

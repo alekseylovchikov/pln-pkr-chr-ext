@@ -5,7 +5,11 @@ export function App() {
   const [code, setCode] = useState('');
 
   function openSidePanel() {
-    chrome.sidePanel.open({ windowId: undefined as unknown as number });
+    chrome.windows.getCurrent({ populate: false }, (win) => {
+      if (win.id !== undefined) {
+        chrome.sidePanel.open({ windowId: win.id });
+      }
+    });
   }
 
   function openSidePanelWithCode() {
