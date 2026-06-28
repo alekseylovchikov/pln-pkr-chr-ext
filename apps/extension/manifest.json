@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Planning Poker",
+  "version": "1.0.0",
+  "description": "Real-time planning poker for development teams",
+
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "alarms"
+  ],
+
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*/*"
+  ],
+
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Planning Poker"
+  },
+
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+
+  "options_page": "src/options/index.html",
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

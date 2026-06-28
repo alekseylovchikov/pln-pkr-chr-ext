@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: planning-poker-server
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/poker.db
+      - ADMIN_SECRET=${ADMIN_SECRET:-change-me-in-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-chrome-extension://}
+    volumes:
+      - poker_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  poker_data:
