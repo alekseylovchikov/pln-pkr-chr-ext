@@ -56,7 +56,6 @@ export function registerWsServer(app: FastifyInstance) {
       const conn = connectionManager.remove(socket);
       if (conn) {
         await roomRepo.setMemberConnected(conn.roomId, conn.userId, false);
-        await userRepo.deleteSession(conn.sessionToken);
         connectionManager.broadcastToAll(conn.roomId, 'user_left', { userId: conn.userId });
 
         setTimeout(async () => {

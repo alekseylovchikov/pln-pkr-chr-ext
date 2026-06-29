@@ -231,6 +231,7 @@ async function handleJoinRoom(
 
 async function handleLeaveRoom(ws: WebSocket, conn: Connection) {
   await roomRepo.setMemberConnected(conn.roomId, conn.userId, false);
+  await userRepo.deleteSession(conn.sessionToken);
   connectionManager.remove(ws);
   connectionManager.broadcastToAll(conn.roomId, 'user_left', { userId: conn.userId });
   await broadcastRoomState(conn.roomId);

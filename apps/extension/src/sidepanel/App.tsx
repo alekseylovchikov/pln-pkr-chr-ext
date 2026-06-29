@@ -159,8 +159,18 @@ export function App() {
           <p className="text-xs text-gray-500 mt-0.5">Enter a room code to join</p>
         </button>
 
-        <div className="mt-auto">
+        <div className="mt-auto flex items-center justify-between gap-2">
           <StatusBadge status={wsStatus} />
+          <a
+            href="https://buymeacoffee.com/jwebbb"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFDD00] px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-[#FFE74D] transition-colors"
+            title="Support the developer"
+          >
+            <span>☕</span>
+            Buy me a coffee
+          </a>
         </div>
       </div>
     </div>

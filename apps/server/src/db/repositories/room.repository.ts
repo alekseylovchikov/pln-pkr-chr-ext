@@ -62,6 +62,26 @@ async function hydrateRoom(roomId: string): Promise<Room | null> {
 
   const cardSet = resolveCardSet(room.cardSetId, room.customCardSet ?? null);
 
+  const allMembers: RoomMember[] = members.map((m) => ({
+    userId: m.userId,
+    userName: m.userName,
+    role: m.role as RoomMember['role'],
+    isConnected: Boolean(m.isConnected),
+    hasVoted: currentRound?.status === 'voting' ? votedUserIds.has(m.userId) : false,
+    joinedAt: new Date(m.joinedAt).toISOString(),
+  }));
+
+  // Deduplicate: if multiple rows share the same userName, keep the connected one
+  // (or the most recent one). Stale rows accumulate when sessions are lost.
+  const seen = new Map<string, RoomMember>();
+  for (const m of allMembers) {
+    const existing = seen.get(m.userName);
+    if (!existing || (!existing.isConnected && m.isConnected)) {
+      seen.set(m.userName, m);
+    }
+  }
+  const deduped = Array.from(seen.values());
+
   return {
     id: room.id,
     code: room.code,
@@ -71,14 +91,7 @@ async function hydrateRoom(roomId: string): Promise<Room | null> {
     currentRound,
     status: room.status as Room['status'],
     createdAt: new Date(room.createdAt).toISOString(),
-    members: members.map((m) => ({
-      userId: m.userId,
-      userName: m.userName,
-      role: m.role as RoomMember['role'],
-      isConnected: Boolean(m.isConnected),
-      hasVoted: currentRound?.status === 'voting' ? votedUserIds.has(m.userId) : false,
-      joinedAt: new Date(m.joinedAt).toISOString(),
-    })),
+    members: deduped,
   };
 }
 

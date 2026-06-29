@@ -83,6 +83,19 @@ function Options() {
           or deploy to any VPS. The server URL should include the protocol and port.
         </p>
       </div>
+
+      <div className="mt-6 flex items-center justify-center">
+        <a
+          href="https://buymeacoffee.com/jwebbb"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#FFDD00] px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-[#FFE74D] transition-colors"
+          title="Support the developer"
+        >
+          <span>☕</span>
+          Buy me a coffee
+        </a>
+      </div>
     </div>
   );
 }
