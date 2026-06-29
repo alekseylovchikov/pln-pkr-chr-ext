@@ -1,5 +1,5 @@
-export const DEFAULT_SERVER_URL = 'http://localhost:3000';
-export const DEFAULT_WS_URL = 'ws://localhost:3000/ws';
+export const DEFAULT_SERVER_URL = 'https://pln-pkr-chr-ext-production.up.railway.app';
+export const DEFAULT_WS_URL = 'wss://pln-pkr-chr-ext-production.up.railway.app/ws';
 
 export const STORAGE_KEYS = {
   serverUrl: 'serverUrl',

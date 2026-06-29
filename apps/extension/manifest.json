@@ -12,6 +12,7 @@
 
   "host_permissions": [
     "http://localhost:3000/*",
+    "https://pln-pkr-chr-ext-production.up.railway.app/*",
     "https://*/*"
   ],
 

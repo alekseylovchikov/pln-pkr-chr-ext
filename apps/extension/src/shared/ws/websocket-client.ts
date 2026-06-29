@@ -5,7 +5,7 @@ import type {
   ServerEventType,
   ServerMessage,
 } from '@planning-poker/shared-types';
-import { DEFAULT_WS_URL, STORAGE_KEYS } from '../config';
+import { DEFAULT_SERVER_URL, DEFAULT_WS_URL, STORAGE_KEYS } from '../config';
 
 type EventHandler<T extends ServerEventType> = (payload: ServerEventMap[T]) => void;
 type AnyEventHandler = (event: ServerEventType, payload: ServerEventMap[ServerEventType]) => void;
@@ -40,7 +40,7 @@ class WebSocketClient {
     else {
       const stored = await new Promise<string>((resolve) => {
         chrome.storage.sync.get([STORAGE_KEYS.serverUrl], (r) => {
-          const base = r[STORAGE_KEYS.serverUrl] || 'http://localhost:3000';
+          const base = r[STORAGE_KEYS.serverUrl] || DEFAULT_SERVER_URL;
           resolve(base.replace(/^http/, 'ws') + '/ws');
         });
       });

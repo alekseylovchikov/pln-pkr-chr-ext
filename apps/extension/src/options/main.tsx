@@ -49,7 +49,7 @@ function Options() {
           label="Server URL"
           value={serverUrl}
           onChange={(e) => setServerUrl(e.target.value.replace(/\/$/, ''))}
-          placeholder="http://localhost:3000"
+          placeholder="https://pln-pkr-chr-ext-production.up.railway.app"
           type="url"
         />
 
