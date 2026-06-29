@@ -1,49 +1,36 @@
-FROM node:20-alpine AS builder
+# Build context: monorepo root
+FROM node:20-alpine
 
+RUN apk add --no-cache python3 make g++ wget
 RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy workspace config
-COPY pnpm-workspace.yaml ./
-COPY package.json ./
-
-# Copy packages
-COPY packages/shared-types ./packages/shared-types
-
-# Copy server
+# Manifests first — maximise layer cache
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/shared-types/package.json ./packages/shared-types/
 COPY apps/server/package.json ./apps/server/
-COPY apps/server/tsconfig.json ./apps/server/
 
+# Install all deps (including devDeps needed to build + native better-sqlite3)
 RUN pnpm install --frozen-lockfile
 
+# Source
+COPY packages/shared-types ./packages/shared-types
 COPY apps/server/src ./apps/server/src
+COPY apps/server/tsconfig.json ./apps/server/
 
-RUN pnpm --filter shared-types build
+# Build shared-types first, then server
+RUN pnpm --filter @planning-poker/shared-types build
 RUN pnpm --filter server build
-
-# ── Runtime image ─────────────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
-
-RUN npm install -g pnpm
-RUN apk add --no-cache wget
-
-WORKDIR /app
-
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/server/dist ./apps/server/dist
-COPY --from=builder /app/apps/server/package.json ./apps/server/
-
-RUN pnpm install --prod --frozen-lockfile
 
 RUN mkdir -p /data
 
 ENV NODE_ENV=production
-ENV PORT=3000
 ENV DB_PATH=/data/poker.db
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
 
 CMD ["node", "apps/server/dist/server.js"]

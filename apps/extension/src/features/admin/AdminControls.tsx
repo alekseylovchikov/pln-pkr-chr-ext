@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Button, Input } from '@/shared/ui';
-import { wsClient } from '@/shared/ws/websocket-client';
 import { useRoomStore } from '@/shared/store/room.store';
 import { useSessionStore } from '@/shared/store/session.store';
-import type { CardSet } from '@planning-poker/shared-types';
+import { Button, Input } from '@/shared/ui';
+import { wsClient } from '@/shared/ws/websocket-client';
 import { BUILT_IN_CARD_SETS } from '@planning-poker/shared-types';
+import { useState } from 'react';
 
 export function AdminControls() {
   const { room, userId } = useRoomStore();
@@ -18,10 +17,10 @@ export function AdminControls() {
   const me = room.members.find((m) => m.userId === userId);
   if (me?.role !== 'admin') return null;
 
-  const adminToken = getSession(currentRoomCode ?? room.code)?.adminToken;
-  if (!adminToken) return null;
+  // adminToken is only needed when sending commands — don't gate the UI on it
+  const adminToken = getSession(currentRoomCode ?? room.code)?.adminToken ?? '';
 
-  const { status, currentRound } = room;
+  const { status } = room;
 
   function send<T extends Record<string, unknown>>(payload: T) {
     return { ...payload, adminToken };
@@ -58,20 +57,15 @@ export function AdminControls() {
 
   const votingMembers = room.members.filter((m) => m.role !== 'observer');
   const votedCount = votingMembers.filter((m) => m.hasVoted).length;
-  const allVoted = votedCount === votingMembers.length && votingMembers.length > 0;
 
   return (
     <div className="flex flex-col gap-3 pt-2 border-t border-gray-100">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-        Admin Controls
-      </p>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Admin Controls</p>
 
       {/* Story input */}
       <div className="flex gap-2">
         <Input
-          placeholder={
-            status === 'voting' ? 'Update story…' : 'Story / ticket (optional)'
-          }
+          placeholder={status === 'voting' ? 'Update story…' : 'Story / ticket (optional)'}
           value={story}
           onChange={(e) => setStory(e.target.value)}
           className="flex-1 text-xs py-1.5"
@@ -97,10 +91,9 @@ export function AdminControls() {
               size="sm"
               className="flex-1"
               onClick={handleReveal}
-              disabled={!allVoted}
-              title={!allVoted ? `${votingMembers.length - votedCount} not voted yet` : 'Reveal'}
+              title={`${votedCount}/${votingMembers.length} voted`}
             >
-              👁 Reveal {!allVoted ? `(${votedCount}/${votingMembers.length})` : ''}
+              👁 Reveal {votedCount}/{votingMembers.length}
             </Button>
             <Button size="sm" variant="secondary" onClick={handleReset}>
               ↺
